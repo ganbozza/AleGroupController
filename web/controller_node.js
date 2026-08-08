@@ -271,7 +271,7 @@ function refreshWidgets(node) {
 
   if(updated) {
     //node.setSize([node.size[0], node.computeSize()[1]]);
-    node.setSize(this.computeSize());
+    node.setSize(node.computeSize());
     app.graph?.setDirtyCanvas?.(true, true);
   }
     }
