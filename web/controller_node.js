@@ -455,14 +455,15 @@ app.registerExtension({
         const origOnAdded = nodeType.prototype.onAdded;
         nodeType.prototype.onAdded = function(graph) {
             const result = origOnAdded?.apply(this, arguments);
-            
+            /*
             // Allow ComfyUI subgraph mappings a tiny calculation window to establish links
             setTimeout(() => {
                 for (let i = 0; i < this.inputs.length; i++) {
                     syncPromotedWidgetCallback(this, this.inputs[i].name);
                 }
             }, 100);
-
+            */
+            console.log("onAdded...");
             return result;
         };
         
