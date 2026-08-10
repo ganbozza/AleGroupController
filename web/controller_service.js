@@ -214,6 +214,7 @@ class AleGroupControllerService {
     }
     
     registerNode(node) {
+      if(this.nodes.has(node)) return;
         this.nodes.add(node);
         console.log("Adding node...");
     }
