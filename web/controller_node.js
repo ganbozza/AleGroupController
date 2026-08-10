@@ -268,6 +268,7 @@ function refreshWidgets(node) {
                 }
             }
         }
+        /*
         if(reevaluate_value) {
             for(const widget of node.widgets) {
                 if(group_alternate.has(widget.name) && (!seen.includes(widget.name))) {                    
@@ -276,6 +277,7 @@ function refreshWidgets(node) {
                 }
             }
         }
+        */
     }
 
   if(updated) {
