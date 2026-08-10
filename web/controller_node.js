@@ -240,6 +240,9 @@ function refreshWidgets(node) {
     //if(node.graph) {
         for(const link of  [...node.graph.links.values()].filter(m => m.target_id===node.id)) {
             // upstreamWidget = getUpstreamWidgetById(link, this.graph);
+            if(!node.inputs[link.target_slot].widget) {
+                continue;
+            }
             const input_widget = node.inputs[link.target_slot].widget;
             if(!input_widget) continue;            
             const localWidget = node.widgets?.find((w)=>w.name===input_widget.name && w._hash_ref===input_widget._hash_ref);
