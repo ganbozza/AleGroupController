@@ -214,7 +214,10 @@ class AleGroupControllerService {
     }
     
     registerNode(node) {
-      if(this.nodes.has(node)) return;
+      if(this.nodes.has(node)) {
+        console.log("Nodes already exists...");
+        return;
+      }
         this.nodes.add(node);
         console.log("Adding node...");
     }
