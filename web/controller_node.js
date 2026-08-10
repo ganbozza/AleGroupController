@@ -242,6 +242,7 @@ function refreshWidgets(node) {
             // upstreamWidget = getUpstreamWidgetById(link, this.graph);
             if (!node.inputs[link.target_slot]) {
                 node.graph.removeLink(link.id);
+                continue;
             }
             let input_widget;
             try {
