@@ -237,7 +237,7 @@ function refreshWidgets(node) {
   }
   */
     var seen = [];
-    //if(node.graph) {
+    if(node.inputs.length>0) {
         for(const link of  [...node.graph.links.values()].filter(m => m.target_id===node.id)) {
             // upstreamWidget = getUpstreamWidgetById(link, this.graph);
             let input_widget;
@@ -272,7 +272,7 @@ function refreshWidgets(node) {
                 }
             }
         }
-    //}
+    }
 
   if(updated) {
     //node.setSize([node.size[0], node.computeSize()[1]]);
