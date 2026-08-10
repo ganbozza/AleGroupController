@@ -242,7 +242,6 @@ function refreshWidgets(node) {
             // upstreamWidget = getUpstreamWidgetById(link, this.graph);
             try {
                 const input_widget = node.inputs[link.target_slot].widget;
-            }
             } catch (e) {
                 continue;
             }
