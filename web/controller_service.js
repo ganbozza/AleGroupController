@@ -183,7 +183,7 @@ class AleGroupControllerService {
         try {
         for (const node of group.graph.nodes) {
             //const nodeBounding = node.getBounding();
-            const nodeBounding = node._posSize;
+            const nodeBounding = node._boundingRect; //node._posSize;
             const nodeCenter = nodeBounding &&
                 [nodeBounding[0] + nodeBounding[2] * 0.5, nodeBounding[1] + nodeBounding[3] * 0.5];
             if (nodeCenter) {
