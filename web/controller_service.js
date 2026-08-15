@@ -16,7 +16,6 @@ class AleGroupControllerService {
     this.initialized = false;
     this._updatingWidget = false;
     this.nodes = new Set();
-    this.available_groups = [];
     this.group_collections = new Map();    
     this.ALPHABETICAL_COLLATOR = new Intl.Collator(undefined, {
                                     sensitivity: "base",
@@ -30,21 +29,7 @@ class AleGroupControllerService {
       if (self.initialized) return;
       self.initialized = true;
 
-    const origGroupTitleChange = app.canvas.onGroupTitleChange;
-
-        // 2. Use an arrow function to preserve class context
-        app.canvas.onGroupTitleChange = (group, newTitle) => {
-            const oldTitle = group.title;
-            
-            // Correctly accesses this.prefix now!
-            console.log(`${this.prefix} Group ${group.id} changed: "${oldTitle}" -> "${newTitle}"`);
-
-            // Passes app.canvas context cleanly into the original LiteGraph system
-            if (origGroupTitleChange) {
-                return origGroupTitleChange.apply(app.canvas, [group, newTitle]);
-            }
-        };
-    
+    /*
     // 1. Capture the original LiteGraph layout instantiation method safely
       const origGraphAdd = LGraph.prototype.add;
     // 2. Override the baseline graph prototype globally
@@ -58,7 +43,8 @@ class AleGroupControllerService {
           
         return result;
       };
-  
+      */
+      /*
         const origGraphRemove = LGraph.prototype.remove;
       LGraph.prototype.remove = function(obj, ...args) {
           const result = origGraphRemove.apply(this, arguments);
@@ -69,26 +55,25 @@ class AleGroupControllerService {
           
         return result;
       };
-    
+     */
       // Intercept LiteGraph drawing loop
       
       const origDraw = LGraphCanvas.prototype.draw;
       LGraphCanvas.prototype.draw = function(...args) {
         if (!app.canvas.isDragging) {
-          /*
+          
           const available_groups = self.getAllGroups();
           // remove non-existent group in group_collection
           self.group_collections = new Map([...self.group_collections].filter(([_, val]) => available_groups.some(b => b.title === val.title))); 
-          // get unique array
-           for (const group of available_groups.filter((item, index, self) => self.findIndex(t => t.title === item.title) === index) ) {
+          for (const group of available_groups.filter((item, index, self) => self.findIndex(t => t.title === item.title) === index) /* contains unique array*/ ) {
               if(self.group_collections.has(normalizeTitle(group.title).toLowerCase())) {
                   continue;
               }
               // add group to collection
               self.addGroupToCollection(group);
           }
-          */
-          self.processGroupCollection();
+          
+          self.processGroupCollection(available_groups);
           self._groupSignature = [...self.group_collections.keys()].join("|");
           // update widget state in each bypasser node to follow group_collection state
           self.syncNodesWidgetValue();            
@@ -96,13 +81,13 @@ class AleGroupControllerService {
         return origDraw.apply(this, args);
       };
 
-    
-      this.available_groups = self.getAllGroups();
-      for (const group of this.available_groups.filter((item, index, self) => self.findIndex(t => t.title === item.title) === index) /* contains unique array*/) {
-          // add group to collection
-          self.addGroupToCollection(group);
-      }
-      console.log("AleGroupController_Service initialized...");
+      //this.available_groups = self.getAllGroups();
+      //for (const group of this.available_groups.filter((item, index, self) => self.findIndex(t => t.title === item.title) === index) /* contains unique array*/) {
+      //    // add group to collection
+      //    self.addGroupToCollection(group);
+      //}
+
+    console.log("AleGroupController_Service initialized...");
   }
 
   getAllGroups(graphContext = app.graph) {
@@ -153,7 +138,7 @@ class AleGroupControllerService {
     }
   */  
   }
-
+  /*
   removeGroupFromCollection(group) {
     const title = normalizeTitle(group.title);
     if(!title) { 
@@ -164,6 +149,7 @@ class AleGroupControllerService {
     console.log("Group has been removed from collection.");
 
   }
+  */
   
   syncNodesWidgetValue(ms=300) {
       if(this._updatingWidget>0) return;
@@ -203,7 +189,7 @@ class AleGroupControllerService {
       return (node.widgets || []).find((widget) => widget.name === name);
     }    
   
-    processGroupCollection() {
+    processGroupCollection(available_groups) {
       /*
       if(this.group_collections.size > available_groups.length) {
         const ag_titles = [];
@@ -222,7 +208,7 @@ class AleGroupControllerService {
       for (const [key, val] of this.group_collections) {
         val.hasActiveNodes = false;
         val.hasNonActiveNodes = false;
-        for (const group of this.available_groups) {
+        for (const group of available_groups) {
           if (group.title==val.title) {
              if(this.processNodeInsideGroup(group, MODE_ACTIVE)) {
                val.hasActiveNodes = true;
