@@ -43,13 +43,14 @@ function addBooleanWidgetToNode(node, title, default_value, key) {
             ALEGROUPCONTROLLER_SERVICE._updatingWidget++;
             //const mode_val = (value===true) ? LiteGraph.ALWAYS : getBypassOrMute(node, title);
             ALEGROUPCONTROLLER_SERVICE.group_collections.get(key).value = value;
-            for(const _group of ALEGROUPCONTROLLER_SERVICE.available_groups.filter((available_group)=>available_group.title==title)) {
+            const available_groups = ALEGROUPCONTROLLER_SERVICE.getAllGroups();
+            for(const _group of available_groups.filter((available_group)=>available_group.title==title)) {
                ALEGROUPCONTROLLER_SERVICE.processNodeInsideGroup(_group, (value===true) ? LiteGraph.ALWAYS : getBypassOrMute(node, title), true);
             }
             const myAltGroupNames = [...new Set(parseSets(node.properties?.[ALTERNATE_KEY]  || "").get(title))];
             if(myAltGroupNames.length>0) {
                 myAltGroupNames.forEach((alt_group_name) => {
-                   for(const _group of ALEGROUPCONTROLLER_SERVICE.available_groups.filter((available_group)=>available_group.title==alt_group_name)) {
+                   for(const _group of available_groups.filter((available_group)=>available_group.title==alt_group_name)) {
                        ALEGROUPCONTROLLER_SERVICE.processNodeInsideGroup(_group, ((value===false) ? LiteGraph.ALWAYS : getBypassOrMute(node, title)), true);
                    }
                 });
