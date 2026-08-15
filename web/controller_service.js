@@ -7,6 +7,9 @@ function normalizeTitle(title) {
   return String(title || "").trim();
 }
 
+function toKey(title) {
+  normalizeTitle(title).toLowerCase();
+}
 
 class AleGroupControllerService {
   constructor() {
@@ -25,7 +28,7 @@ class AleGroupControllerService {
       const self = this;
       if (self.initialized) return;
       self.initialized = true;
-  /*
+  
     // 1. Capture the original LiteGraph layout instantiation method safely
       const origGraphAdd = LGraph.prototype.add;
     // 2. Override the baseline graph prototype globally
@@ -34,30 +37,41 @@ class AleGroupControllerService {
           const result = origGraphAdd.apply(this, arguments);
   
         if (obj && obj.constructor && obj.constructor.name === "LGraphGroup") {
-            self.addGroupToCollection(obj);
-            console.log("A new group is being added to the collection!");
+            self.addGroupToCollection(obj);            
         }
-  
-        
+          
         return result;
       };
   
-  */
+        const origGraphRemove = LGraph.prototype.remove;
+      LGraph.prototype.remove = function(obj, ...args) {
+          const result = origGraphRemove.apply(this, arguments);
+  
+        if (obj && obj.constructor && obj.constructor.name === "LGraphGroup") {
+            self.removeGroupFromCollection(obj);            
+        }
+          
+        return result;
+      };
+    
       // Intercept LiteGraph drawing loop
       
       const origDraw = LGraphCanvas.prototype.draw;
       LGraphCanvas.prototype.draw = function(...args) {
         if (!app.canvas.isDragging) {
+          /*
           const available_groups = self.getAllGroups();
           // remove non-existent group in group_collection
           self.group_collections = new Map([...self.group_collections].filter(([_, val]) => available_groups.some(b => b.title === val.title))); 
-           for (const group of available_groups.filter((item, index, self) => self.findIndex(t => t.title === item.title) === index) /* contains unique array*/) {
+          // get unique array
+           for (const group of available_groups.filter((item, index, self) => self.findIndex(t => t.title === item.title) === index) ) {
               if(self.group_collections.has(normalizeTitle(group.title).toLowerCase())) {
                   continue;
               }
               // add group to collection
               self.addGroupToCollection(group);
           }
+          */
           self.processGroupCollection(available_groups);
           self._groupSignature = [...self.group_collections.keys()].join("|");
           // update widget state in each bypasser node to follow group_collection state
@@ -65,7 +79,13 @@ class AleGroupControllerService {
         }
         return origDraw.apply(this, args);
       };
-      
+
+    
+      const available_groups = self.getAllGroups();
+      for (const group of available_groups.filter((item, index, self) => self.findIndex(t => t.title === item.title) === index) /* contains unique array*/) {
+          // add group to collection
+          self.addGroupToCollection(group);
+      }
       console.log("AleGroupController_Service initialized...");
   }
 
@@ -74,7 +94,7 @@ class AleGroupControllerService {
     if(!title) { 
       return; 
     }
-    const key = title.toLowerCase();
+    const key = toKey(group.title);
     if(!this.group_collections.has(key)) {
         this.group_collections.set(key, {
             key,
@@ -82,7 +102,8 @@ class AleGroupControllerService {
             value : true,
             hasActiveNodes : true,
             hasNonActiveNodes : true
-        }); 
+        });
+      console.log("A new group is being added to the collection!");
     }
   /*
     if (this.group_collections.get(key).value === MODE_BYPASS) { // ignore if group already in active state
@@ -90,7 +111,29 @@ class AleGroupControllerService {
     }
   */  
   }
-  
+
+  removeGroupFromCollection(group) {
+    const title = normalizeTitle(group.title);
+    if(!title) { 
+      return; 
+    }
+    const key = toKey(group.title);
+    if(!this.group_collections.has(key)) {
+        this.group_collections.set(key, {
+            key,
+            title,
+            value : true,
+            hasActiveNodes : true,
+            hasNonActiveNodes : true
+        });
+      console.log("A new group is being added to the collection!");
+    }
+  /*
+    if (this.group_collections.get(key).value === MODE_BYPASS) { // ignore if group already in active state
+      this.group_collections.get(key).value =  (this.processNodeInsideGroup(group, MODE_BYPASS)) ? MODE_ACTIVE : MODE_BYPASS;
+    }
+  */  
+  }
   syncNodesWidgetValue(ms=300) {
       if(this._updatingWidget>0) return;
       this._updatingWidget++;
