@@ -1,3 +1,28 @@
+/**
+ *  Match, Alternate & Exclude Group Controller
+ *
+ * Right-click a Ale Group Controller node → "Properties" or
+ * "Properties Panel" and fill in any/all of the new fields.
+ *
+ * Each property accepts comma-separated sets. Within a set, group names are
+ * separated by colons. Sets may contain TWO OR MORE groups:
+ *
+ * Alternate Groups - comma-separated sets separated by ":"
+ *                     Example:  "Load Video:Load Image:Load Webcam"
+ *                               "Save Video:Save Image, Mode A:Mode B:Mode C"
+ *                     Effect:   Enabling any member disables all others in
+ *                               the set (radio-button style). Relationship is one directional.
+ *
+ * Match Groups : Only list groups with matching title (regexp style)
+ *              Example : ^Group|OtherGroup
+ *              Effect : List Group A, Group B, Group C and OtherGroup... 
+ *
+ * Exclude Groups : List all other groups EXCEPT with matching title (regexp style)
+ *                   Example : ^OtherGroup|Group D
+ *                   Effect : List all group excep OtherGroup A, OtherGroup B & Group D.
+ *
+ *                   
+**/
 import { app } from "../../scripts/app.js";
 
 import { ALEGROUPCONTROLLER_SERVICE } from "./controller_service.js";
