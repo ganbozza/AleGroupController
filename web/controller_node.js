@@ -9,6 +9,7 @@ const MATCH_KEY = "Match Groups";
 const MUTE_KEY = "Mute Groups";
 const SORT_A_KEY = "Sort Alphanumeric";
 
+/*
 function findNodeInAllGraphs(currentGraph, nodeId) {
     // 1. Check the current graph level
     let node = currentGraph.getNodeById(nodeId);
@@ -27,6 +28,7 @@ function findNodeInAllGraphs(currentGraph, nodeId) {
     // 3. Return null if not found anywhere in this branch
     return null;
 }
+*/
 
 function getBypassOrMute(node, group_name) {
     return (node.properties?.[MUTE_KEY].split(",").map(item => item.trim()).includes(group_name)) ? MODE_MUTE : MODE_BYPASS;
@@ -41,14 +43,13 @@ function addBooleanWidgetToNode(node, title, default_value, key) {
             ALEGROUPCONTROLLER_SERVICE._updatingWidget++;
             //const mode_val = (value===true) ? LiteGraph.ALWAYS : getBypassOrMute(node, title);
             ALEGROUPCONTROLLER_SERVICE.group_collections.get(key).value = value;
-            const available_groups = ALEGROUPCONTROLLER_SERVICE.getAllGroups();
-            for(const _group of available_groups.filter((available_group)=>available_group.title==title)) {
+            for(const _group of ALEGROUPCONTROLLER_SERVICE.available_groups.filter((available_group)=>available_group.title==title)) {
                ALEGROUPCONTROLLER_SERVICE.processNodeInsideGroup(_group, (value===true) ? LiteGraph.ALWAYS : getBypassOrMute(node, title), true);
             }
             const myAltGroupNames = [...new Set(parseSets(node.properties?.[ALTERNATE_KEY]  || "").get(title))];
             if(myAltGroupNames.length>0) {
                 myAltGroupNames.forEach((alt_group_name) => {
-                   for(const _group of available_groups.filter((available_group)=>available_group.title==alt_group_name)) {
+                   for(const _group of ALEGROUPCONTROLLER_SERVICE.available_groups.filter((available_group)=>available_group.title==alt_group_name)) {
                        ALEGROUPCONTROLLER_SERVICE.processNodeInsideGroup(_group, ((value===false) ? LiteGraph.ALWAYS : getBypassOrMute(node, title)), true);
                    }
                 });
@@ -367,7 +368,7 @@ function findParentSubgraphNode(node) {
     }
     return null;
 }
-
+/*
 // --- Helper: Bind callbacks directly between inner widgets and outer promoted proxies ---
 function syncPromotedWidgetCallback(node, slotName) {
   const localWidget = node.widgets?.find(w => w.name === slotName);
@@ -410,7 +411,7 @@ function syncPromotedWidgetCallback(node, slotName) {
       
   }
 }
-
+*/
 
 app.registerExtension({
     name: "ale.group.controller",
@@ -632,10 +633,12 @@ app.registerExtension({
             return result;
         };
     },
-    
+
+    /*
   loadedGraphNode(node) {
-    //console.log("AAAAA");
+    //console.log("loadedGraphNode");
   },
+  */
 });
 
     
