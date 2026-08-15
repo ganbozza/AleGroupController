@@ -518,7 +518,7 @@ app.registerExtension({
           */
           const result = originalOnConfigure?.apply(this, arguments);
           // Ensure size updates after slots are generated
-          this.setSize(this.computeSize());
+          //this.setSize(this.computeSize());
           
           return result;
         };
