@@ -8,7 +8,7 @@ function normalizeTitle(title) {
 }
 
 function toKey(title) {
-  normalizeTitle(title).toLowerCase();
+  return normalizeTitle(title).toLowerCase();
 }
 
 class AleGroupControllerService {
