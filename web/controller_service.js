@@ -83,7 +83,7 @@ class AleGroupControllerService {
 
     
       this.available_groups = self.getAllGroups();
-      for (const group of available_groups.filter((item, index, self) => self.findIndex(t => t.title === item.title) === index) /* contains unique array*/) {
+      for (const group of this.available_groups.filter((item, index, self) => self.findIndex(t => t.title === item.title) === index) /* contains unique array*/) {
           // add group to collection
           self.addGroupToCollection(group);
       }
