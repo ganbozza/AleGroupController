@@ -16,7 +16,8 @@ class AleGroupControllerService {
     this.initialized = false;
     this._updatingWidget = false;
     this.nodes = new Set();
-    this.group_collections = new Map();
+    this.available_groups = [];
+    this.group_collections = new Map();    
     this.ALPHABETICAL_COLLATOR = new Intl.Collator(undefined, {
                                     sensitivity: "base",
                                     numeric: true,
@@ -72,7 +73,7 @@ class AleGroupControllerService {
               self.addGroupToCollection(group);
           }
           */
-          self.processGroupCollection(available_groups);
+          self.processGroupCollection();
           self._groupSignature = [...self.group_collections.keys()].join("|");
           // update widget state in each bypasser node to follow group_collection state
           self.syncNodesWidgetValue();            
@@ -81,7 +82,7 @@ class AleGroupControllerService {
       };
 
     
-      const available_groups = self.getAllGroups();
+      this.available_groups = self.getAllGroups();
       for (const group of available_groups.filter((item, index, self) => self.findIndex(t => t.title === item.title) === index) /* contains unique array*/) {
           // add group to collection
           self.addGroupToCollection(group);
@@ -89,6 +90,32 @@ class AleGroupControllerService {
       console.log("AleGroupController_Service initialized...");
   }
 
+  getAllGroups(graphContext = app.graph) {
+    let gatheredGroups = [];
+    
+    // 1. Grab all groups present in the current graph layer context
+    if (graphContext._groups && graphContext._groups.length > 0) {
+      for (const group of graphContext._groups) {
+          // We append a helpful 'layer' property so you know exactly where this group lives
+          gatheredGroups.push(group);
+      }
+    }
+    
+    // 2. Scan all nodes in this layer to check for nested Subgraphs
+    if (graphContext._nodes) {
+      for (const node of graphContext._nodes) {
+          // Check if the node contains an internal nested subgraph
+          if (node.subgraph && node.subgraph instanceof LGraph) {    
+              // Recurse into the sub-graph layer and merge the results
+              const subGroups = this.getAllGroups(node.subgraph);
+              gatheredGroups = gatheredGroups.concat(subGroups);
+          }
+      }
+    }
+    
+    return gatheredGroups;
+  }
+  
   addGroupToCollection(group) {
     const title = normalizeTitle(group.title);
     if(!title) { 
@@ -103,7 +130,7 @@ class AleGroupControllerService {
             hasActiveNodes : true,
             hasNonActiveNodes : true
         });
-      console.log("A new group is being added to the collection!");
+      console.log("A new group is being added to the collection.");
     }
   /*
     if (this.group_collections.get(key).value === MODE_BYPASS) { // ignore if group already in active state
@@ -117,23 +144,12 @@ class AleGroupControllerService {
     if(!title) { 
       return; 
     }
-    const key = toKey(group.title);
-    if(!this.group_collections.has(key)) {
-        this.group_collections.set(key, {
-            key,
-            title,
-            value : true,
-            hasActiveNodes : true,
-            hasNonActiveNodes : true
-        });
-      console.log("A new group is being added to the collection!");
-    }
-  /*
-    if (this.group_collections.get(key).value === MODE_BYPASS) { // ignore if group already in active state
-      this.group_collections.get(key).value =  (this.processNodeInsideGroup(group, MODE_BYPASS)) ? MODE_ACTIVE : MODE_BYPASS;
-    }
-  */  
+    this.available_groups.splice(this.available_groups.indexOf(group.title), 1)
+    this.group_collections = this.available_groups.filter((item, index, self) => self.findIndex(t => t.title === item.title) === index);
+    console.log("Group has been removed from collection.");
+
   }
+  
   syncNodesWidgetValue(ms=300) {
       if(this._updatingWidget>0) return;
       this._updatingWidget++;
@@ -172,7 +188,8 @@ class AleGroupControllerService {
       return (node.widgets || []).find((widget) => widget.name === name);
     }    
   
-    processGroupCollection(available_groups) {
+    processGroupCollection() {
+      /*
       if(this.group_collections.size > available_groups.length) {
         const ag_titles = [];
         for (const ag of available_groups) {
@@ -185,11 +202,12 @@ class AleGroupControllerService {
           }
         }
       }
+      */
       // sync state in group_collections with group's node mode
       for (const [key, val] of this.group_collections) {
         val.hasActiveNodes = false;
         val.hasNonActiveNodes = false;
-        for (const group of available_groups) {
+        for (const group of this.available_groups) {
           if (group.title==val.title) {
              if(this.processNodeInsideGroup(group, MODE_ACTIVE)) {
                val.hasActiveNodes = true;
@@ -210,7 +228,7 @@ class AleGroupControllerService {
 
     }
       
-
+    /*
     updateNodeInsideGroupByTitle(title, mode) {
        const available_groups = app.graph?._groups || [];
        for (const group of available_groups) {
@@ -219,6 +237,7 @@ class AleGroupControllerService {
           }
        }
     }
+    */
   
     processNodeInsideGroup(group, mode, is_set=false) {
          if (app.canvas.isDragging)
@@ -251,10 +270,12 @@ class AleGroupControllerService {
         //  console.log("all bypassed...");
         return false;
     }
-    
+  
+    /*
     getGroupNodes(group) {
         return Array.from(group._children).filter((c) => c instanceof LGraphNode);
     }
+    */
     
     registerNode(node) {
       if(this.nodes.has(node)) {
@@ -269,7 +290,8 @@ class AleGroupControllerService {
         this.nodes.delete(node);
         console.log("Removing node...");
     }
-
+  
+    /*
     // Helper: Find which canvas group contains a node's position coordinates
     getGroupContainingNode(node) {
         const groups = app.graph?._groups || [];
@@ -320,89 +342,64 @@ class AleGroupControllerService {
             });
         });
     }
-
-  // inputs[1]._subgraphSlot.linkIds (subgraph punya input yg related dgn link id) dari link id tu boleh tgh node target_id & target_slot
-// one liner : [...app.graph._nodes.values()].filter(m => m.subgraph).find((m) => m.subgraph.links === app.graph.nodes[2].subgraph.links).inputs.find((i)=>i._subgraphSlot.linkIds.find(li => li===2))
-getUpstreamWidgetByLink(link, graphContext) {
-    /*
-    if(link.origin_id>0) {
-        const upstreamNode = graphContext.getNodeById(link.origin_id);
-        const next_link =  [...graphContext.links.values()].filter(m => m.target_id===upstreamNode.id);
-        if(next_link)
-            return getUpstreamNodeById(next_link, graphContext);
-        return upstreamNode;
-    }
     */
-    if(link.origin_id>0) {
-        const nextUpstreamLink = [...graphContext.links.values()].find(m => m.target_id===link.origin_id)
-        if(nextUpstreamLink)
-            return this.getUpstreamWidgetByLink(nextUpstreamLink, graphContext);
-        return graphContext.getNodeById(link.origin_id).widgets[link.origin_slot];
-    } 
-    // upstream is subgraph
-    return this.getUpstreamWidgetInSubgraphByLink(link, graphContext._rootGraph);
-}
-
-    getUpstreamWidgetInSubgraphByLink(link, graphContext) {
-        const upstreamSubgraph = [...graphContext._nodes.values()].filter(n => n.subgraph).find((n) => [...n.subgraph.links.values()].find((l)=>l===link));
-        if(upstreamSubgraph) {
-          // takyah kut ni : const inputSlot = inputs.find((i)=>i._subgraphSlot.linkIds.find(li => li===link.id))
-          const nextUpstreamLink = upstreamSubgraph.inputs[link.origin_slot].link;
-          if (nextUpstreamLink) {
-              return this.getUpstreamWidgetByLink(upstreamSubgraph.graph.links.get(nextUpstreamLink), upstreamSubgraph.graph);
-          }
-          const widgetId = upstreamSubgraph.inputs[link.origin_slot].widgetId;
-          return upstreamSubgraph.widgets.find((w)=>w.widgetId===upstreamSubgraph.inputs[link.origin_slot].widgetId);
+  
+  // inputs[1]._subgraphSlot.linkIds (subgraph punya input yg related dgn link id) dari link id tu boleh tgh node target_id & target_slot
+  // one liner : [...app.graph._nodes.values()].filter(m => m.subgraph).find((m) => m.subgraph.links === app.graph.nodes[2].subgraph.links).inputs.find((i)=>i._subgraphSlot.linkIds.find(li => li===2))
+  getUpstreamWidgetByLink(link, graphContext) {
+      /*
+      if(link.origin_id>0) {
+          const upstreamNode = graphContext.getNodeById(link.origin_id);
+          const next_link =  [...graphContext.links.values()].filter(m => m.target_id===upstreamNode.id);
+          if(next_link)
+              return getUpstreamNodeById(next_link, graphContext);
+          return upstreamNode;
+      }
+      */
+      if(link.origin_id>0) {
+          const nextUpstreamLink = [...graphContext.links.values()].find(m => m.target_id===link.origin_id)
+          if(nextUpstreamLink)
+              return this.getUpstreamWidgetByLink(nextUpstreamLink, graphContext);
+          return graphContext.getNodeById(link.origin_id).widgets[link.origin_slot];
+      } 
+      // upstream is subgraph
+      return this.getUpstreamWidgetInSubgraphByLink(link, graphContext._rootGraph);
+  }
+  
+  getUpstreamWidgetInSubgraphByLink(link, graphContext) {
+      const upstreamSubgraph = [...graphContext._nodes.values()].filter(n => n.subgraph).find((n) => [...n.subgraph.links.values()].find((l)=>l===link));
+      if(upstreamSubgraph) {
+        // takyah kut ni : const inputSlot = inputs.find((i)=>i._subgraphSlot.linkIds.find(li => li===link.id))
+        const nextUpstreamLink = upstreamSubgraph.inputs[link.origin_slot].link;
+        if (nextUpstreamLink) {
+            return this.getUpstreamWidgetByLink(upstreamSubgraph.graph.links.get(nextUpstreamLink), upstreamSubgraph.graph);
         }
-        /*
-        [...app.graph._nodes.values()].filter(m => m.subgraph).find((m) => m.subgraph.links === app.graph.nodes[2].subgraph.links).inputs.find((i)=>i._subgraphSlot.linkIds.find(li => li===link.id))
-        if(graphContext.links===link) {
-          const subgraphNode = [...app.graph.nodes.values()].filter(m => m.subgraph).find((m) => m.subgraph.links === link);
-          return graphContext;
-        }
-        
-        // Iterate through all nodes on this level to find subgraphs
-        if (graphContext._nodes) {
-          for (const node of graphContext._nodes) {
-            // Check if the node contains an internal nested subgraph
-            if (node.subgraph && node.subgraph instanceof LGraph) {    
-                // Recurse into the sub-graph layer and merge the results
-                const upstreamWidget = findWidgetInSubgraphByLink(link, node.subgraph);
-                if(upstreamWidget) {
-                    return upstreamWidget;
-                }
-            }
-          }
-        }
-        */
-        return null;
-    }
-
-    getAllGroups(graphContext = app.graph) {
-        let gatheredGroups = [];
-        
-        // 1. Grab all groups present in the current graph layer context
-        if (graphContext._groups && graphContext._groups.length > 0) {
-          for (const group of graphContext._groups) {
-              // We append a helpful 'layer' property so you know exactly where this group lives
-              gatheredGroups.push(group);
-          }
-        }
-        
-        // 2. Scan all nodes in this layer to check for nested Subgraphs
-        if (graphContext._nodes) {
-          for (const node of graphContext._nodes) {
-              // Check if the node contains an internal nested subgraph
-              if (node.subgraph && node.subgraph instanceof LGraph) {    
-                  // Recurse into the sub-graph layer and merge the results
-                  const subGroups = this.getAllGroups(node.subgraph);
-                  gatheredGroups = gatheredGroups.concat(subGroups);
+        const widgetId = upstreamSubgraph.inputs[link.origin_slot].widgetId;
+        return upstreamSubgraph.widgets.find((w)=>w.widgetId===upstreamSubgraph.inputs[link.origin_slot].widgetId);
+      }
+      /*
+      [...app.graph._nodes.values()].filter(m => m.subgraph).find((m) => m.subgraph.links === app.graph.nodes[2].subgraph.links).inputs.find((i)=>i._subgraphSlot.linkIds.find(li => li===link.id))
+      if(graphContext.links===link) {
+        const subgraphNode = [...app.graph.nodes.values()].filter(m => m.subgraph).find((m) => m.subgraph.links === link);
+        return graphContext;
+      }
+      
+      // Iterate through all nodes on this level to find subgraphs
+      if (graphContext._nodes) {
+        for (const node of graphContext._nodes) {
+          // Check if the node contains an internal nested subgraph
+          if (node.subgraph && node.subgraph instanceof LGraph) {    
+              // Recurse into the sub-graph layer and merge the results
+              const upstreamWidget = findWidgetInSubgraphByLink(link, node.subgraph);
+              if(upstreamWidget) {
+                  return upstreamWidget;
               }
           }
         }
-        
-        return gatheredGroups;
-    }
+      }
+      */
+      return null;
+  }
 }
 
 export const ALEGROUPCONTROLLER_SERVICE = new AleGroupControllerService();
