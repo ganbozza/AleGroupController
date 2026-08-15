@@ -25,7 +25,7 @@ class AleGroupControllerService {
       const self = this;
       if (self.initialized) return;
       self.initialized = true;
-  
+  /*
     // 1. Capture the original LiteGraph layout instantiation method safely
       const origGraphAdd = LGraph.prototype.add;
     // 2. Override the baseline graph prototype globally
@@ -42,7 +42,7 @@ class AleGroupControllerService {
         return result;
       };
   
-  
+  */
       // Intercept LiteGraph drawing loop
       
       const origDraw = LGraphCanvas.prototype.draw;
@@ -183,7 +183,7 @@ class AleGroupControllerService {
         try {
         for (const node of group.graph.nodes) {
             //const nodeBounding = node.getBounding();
-            const nodeBounding = node._boundingRect; //node._posSize;
+            const nodeBounding = ((node._boundingRect[2]>0) || (node._boundingRect[3]>0)) ? node._boundingRect : node._posSize;
             const nodeCenter = nodeBounding &&
                 [nodeBounding[0] + nodeBounding[2] * 0.5, nodeBounding[1] + nodeBounding[3] * 0.5];
             if (nodeCenter) {
