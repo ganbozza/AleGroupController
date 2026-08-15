@@ -32,7 +32,7 @@ class AleGroupControllerService {
 
     const origOnGroupTitleChange = app.canvas.onGroupTitleChange;
         
-    app.canvas.onGroupTitleChange = function(group, newTitle) {
+    app.canvas.onGroupTitleChange = function(...args) {
         const oldTitle = group.title;
         
         // Console log or trigger custom node updates here
