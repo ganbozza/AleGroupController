@@ -29,7 +29,21 @@ class AleGroupControllerService {
       const self = this;
       if (self.initialized) return;
       self.initialized = true;
-  
+
+    const origOnGroupTitleChange = app.canvas.onGroupTitleChange;
+        
+    app.canvas.onGroupTitleChange = function(group, newTitle) {
+        const oldTitle = group.title;
+        
+        // Console log or trigger custom node updates here
+        console.log(`[Group Renamed] ID: ${group.id} | "${oldTitle}" ➔ "${newTitle}"`);
+        
+        // Critical: Call the original method to ensure the UI actually updates
+        if (origOnGroupTitleChange) {
+            return origOnGroupTitleChange.apply(this, arguments);
+        }
+    };
+    
     // 1. Capture the original LiteGraph layout instantiation method safely
       const origGraphAdd = LGraph.prototype.add;
     // 2. Override the baseline graph prototype globally
